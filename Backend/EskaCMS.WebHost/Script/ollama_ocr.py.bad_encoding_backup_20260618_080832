@@ -1,0 +1,980 @@
+# ollama_ocr.py
+# -*- coding: utf-8 -*-
+"""
+Ollama-based OCR for Jordanian identity documents.
+
+Strategy per document type:
+  - Passport      -> Ollama vision model
+  - National ID   -> Ollama vision model
+  - Vehicle Lic.  -> Ollama vision model with EasyOCR fallback for registration number
+
+Recommended model:
+    ollama pull qwen2.5vl:7b
+
+Ollama service default:
+    http://127.0.0.1:11434
+
+Optional environment variables:
+    OLLAMA_BASE=http://127.0.0.1:11434
+    OLLAMA_REQUEST_TIMEOUT=300
+    OLLAMA_VISION_MODEL=qwen2.5vl:7b
+
+Usage:
+    import ollama_ocr
+
+    if ollama_ocr.is_available():
+        result = ollama_ocr.extract_passport("passport.jpg")
+        result = ollama_ocr.extract_jordan_id("front.jpg", "back.jpg")
+        result = ollama_ocr.extract_vehicle_license("front.jpg", "back.jpg")
+"""
+
+import base64
+import json
+import os
+import re
+import tempfile
+import urllib.request
+
+import cv2
+import numpy as np
+
+
+# ---------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------
+
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE", "http://127.0.0.1:11434").rstrip("/")
+REQUEST_TIMEOUT = int(os.environ.get("OLLAMA_REQUEST_TIMEOUT", "300"))
+
+# Force a specific model if needed:
+# export OLLAMA_VISION_MODEL=qwen2.5vl:7b
+_FORCED_MODEL = os.environ.get("OLLAMA_VISION_MODEL", "").strip() or None
+
+# Vision models in preference order.
+# IMPORTANT:
+# - Do not fallback to text models like qwen3:8b for OCR images.
+# - If no supported vision model is installed, return None.
+_VISION_PRIORITY = [
+    "qwen2.5vl",
+    "llama3.2-vision",
+    "gemma4",
+    "gemma3",
+    "minicpm-v",
+    "llava:13b",
+    "llava:7b",
+    "llava",
+    "moondream",
+    "qwen3-vl",
+    "qwen2-vl",
+]
+
+# Models that may emit thinking/reasoning.
+# These are routed through /api/chat with think=false.
+_THINKING_MODEL_PREFIXES = {
+    "qwen3-vl",
+    "qwen3",
+    "qwen2-vl",
+}
+
+_WEAK_MODELS = {"llava:7b", "moondream", "llava"}
+
+# Arabic-Indic and Extended Arabic-Indic digits -> Western digits.
+# This avoids corrupted mojibake values like "Ù¡".
+_AR_INDIC = str.maketrans({
+    "?": "0", "?": "1", "?": "2", "?": "3", "?": "4",
+    "?": "5", "?": "6", "?": "7", "?": "8", "?": "9",
+    "?": "0", "?": "1", "?": "2", "?": "3", "?": "4",
+    "?": "5", "?": "6", "?": "7", "?": "8", "?": "9",
+})
+
+
+# ---------------------------------------------------------------------
+# Prompts
+# ---------------------------------------------------------------------
+
+_PROMPT_PASSPORT = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+Do not explain. Do not use markdown. Do not add text before or after the JSON.
+CRITICAL: Output all values in their original language. Never output Chinese.
+
+Task: Extract every visible field from this Jordanian passport image.
+Use null for any field you cannot read clearly.
+Dates must be in DD/MM/YYYY format.
+MRZ lines must be exactly 44 characters using only A-Z, 0-9, and <.
+
+Output exactly this structure:
+{"passport_no": null, "national_no": null, "name_en": null, "name_ar": null, "date_of_birth": null, "expiry_date": null, "issue_date": null, "gender": null, "nationality": null, "place_of_birth": null, "mrz_l1": null, "mrz_l2": null}"""
+
+_PROMPT_NATIONAL_ID_FRONT = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+Do not explain. Do not use markdown. Do not add text before or after the JSON.
+CRITICAL: Output all values in their original language: Arabic in Arabic, English in English. Never output Chinese.
+
+Task: Extract every visible field from this Jordanian national ID card FRONT image.
+Use null for fields you cannot read clearly.
+Dates must be in DD/MM/YYYY format.
+
+Field locations on the FRONT side:
+- national_number: next to Arabic label "????? ??????" — exactly 10 digits
+- full_name_ar: next to Arabic label "?????" — full Arabic name, all visible parts
+- full_name_en: next to English label "Name:" — full English name, all visible parts
+- date_of_birth: next to Arabic label "????? ???????"
+- gender: next to Arabic label "?????" — return M or F only
+- place_of_birth: next to Arabic label "???? ???????" — city/place only
+- mother_name: next to Arabic label "??? ????" — mother first name in Arabic
+
+Output exactly this structure:
+{"national_number": null, "full_name_ar": null, "full_name_en": null, "date_of_birth": null, "gender": null, "place_of_birth": null, "mother_name": null}"""
+
+_PROMPT_NATIONAL_ID_BACK = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+Do not explain. Do not use markdown. Do not add text before or after the JSON.
+CRITICAL: Output all values in their original language. Never output Chinese.
+
+Task: Extract every visible field from this Jordanian national ID card BACK image.
+Use null for fields you cannot read clearly.
+Dates must be in DD/MM/YYYY format.
+MRZ lines must be exactly 30 characters using only A-Z, 0-9, and <.
+
+Field locations on the BACK side:
+- document_number: next to label "ID no." — alphanumeric, e.g. FDN46372
+- expiry_date: next to label "Expiry / ????????"
+- blood_type: next to Arabic label "????? ????" — one of A+/A-/B+/B-/O+/O-/AB+/AB-
+- mrz_l1: first MRZ line at the bottom, 30 chars, starts with IDJOR
+- mrz_l2: second MRZ line at the bottom, 30 chars
+- mrz_l3: third MRZ line at the bottom, 30 chars, name line with << separator
+
+Output exactly this structure:
+{"document_number": null, "expiry_date": null, "blood_type": null, "mrz_l1": null, "mrz_l2": null, "mrz_l3": null}"""
+
+_PROMPT_VEHICLE_FRONT = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+Do not explain. Do not use markdown. Do not add text before or after the JSON.
+
+Task: Read the plate number from this Jordanian vehicle license FRONT image.
+
+CRITICAL — the plate number is:
+- In the large highlighted box at the very bottom of the card
+- Next to Arabic label "??? ??????"
+- Formatted like "19-57229" or "AD934208"
+
+Do NOT return the alphanumeric code printed at the top of the card.
+The top code is a document ID, not the plate number.
+If you cannot read the field clearly, use null.
+
+Output exactly this structure:
+{"plate_number": null}"""
+
+_PROMPT_VEHICLE_BACK = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+Do not explain. Do not use markdown. Do not add text before or after the JSON.
+If you cannot read a field clearly, use null.
+
+Task: Read THREE specific fields from this Jordanian vehicle license BACK image.
+
+FIELD 1 — registration_number (??? ???????):
+- Find Arabic label "??? ???????"
+- It is on the first data row, near the top-right area
+- The value may be printed in Arabic-Indic digits: ?=0 ?=1 ?=2 ?=3 ?=4 ?=5 ?=6 ?=7 ?=8 ?=9
+- Convert every digit to western digits
+- Result is exactly 10 digits starting with 1
+- Example: ?????????? -> "1319305497"
+- Do NOT return the value next to "??? ????????"
+- Do NOT return the value next to "??? ??????"
+
+FIELD 2 — chassis_number (??? ??????):
+- Next to Arabic label "??? ??????"
+- Exactly 17 characters
+- Only letters A-Z and digits 0-9
+- Example: "KMHDN41AP3U589471"
+- Do NOT return the engine number "??? ??????"
+
+FIELD 3 — policy_number (??? ????????):
+- Find Arabic label "??? ????????" near the bottom of the card
+- Western digits only, typically 10 digits
+- Example: "1011191737"
+- Must be different from registration_number
+
+Output exactly this structure:
+{"registration_number": null, "chassis_number": null, "policy_number": null}"""
+
+_PROMPT_VEHICLE_BACK_REG = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+If you cannot read the field, use null.
+
+Task: Find ONLY the registration number (??? ???????) in this Jordanian vehicle license image.
+- Find Arabic label "??? ???????" on the first data row near the top of the card
+- The value may be printed in Arabic-Indic digits: ?=0 ?=1 ?=2 ?=3 ?=4 ?=5 ?=6 ?=7 ?=8 ?=9
+- Convert every digit to western digits
+- Result must be exactly 10 digits starting with 1
+- Example: ?????????? -> "1331214303"
+- Do NOT return value next to "??? ????????" or "??? ??????"
+
+Output exactly this structure:
+{"registration_number": null}"""
+
+_PROMPT_VEHICLE_BACK_REG_RAW = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+If you cannot read the field, use null.
+
+Task: Find ONLY the registration number (??? ???????) in this Jordanian vehicle license image.
+- Find Arabic label "??? ???????" on the first data row near the top of the card
+- Copy the digits next to it exactly as they appear
+- Do NOT convert them
+- Do NOT use any value from the bottom of the card
+
+Output exactly this structure:
+{"registration_number_raw": null}"""
+
+_PROMPT_VEHICLE_BACK_CHASSIS = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+If you cannot read the field, use null.
+
+Task: Find the chassis number (??? ??????) in this Jordanian vehicle license image.
+- Exactly 17 characters
+- Only letters A-Z and digits 0-9
+- Example: "KMHDN41AP3U589471"
+- Do NOT return the engine number "??? ??????"
+
+Output exactly this structure:
+{"chassis_number": null}"""
+
+_PROMPT_VEHICLE_BACK_POLICY = """You are a JSON-only OCR engine. Output nothing except a single JSON object.
+If you cannot read the field, use null.
+
+Task: Find the insurance policy number (??? ????????) in this Jordanian vehicle license image.
+- Near the bottom of the card next to Arabic label "??? ????????"
+- Western digits only
+- Example: "1010875804"
+
+Output exactly this structure:
+{"policy_number": null}"""
+
+
+# ---------------------------------------------------------------------
+# General helpers
+# ---------------------------------------------------------------------
+
+def _fix_arabic_zero_dot(value: str) -> str:
+    """
+    Some models render Arabic-Indic zero as a dot.
+    Fix sequences like "13193.5497" -> "1319305497".
+    """
+    return re.sub(r"(\d)\.(\d)", r"\g<1>0\g<2>", str(value))
+
+
+def normalize_field(value):
+    """
+    Some OCR layers return {"value": "...", "conf": 1}.
+    This returns the nested value only.
+    """
+    if isinstance(value, dict):
+        inner = value.get("value", "")
+        while isinstance(inner, dict):
+            inner = inner.get("value", "")
+        return inner or ""
+    return value or ""
+
+
+def _str_field(data: dict | None, key: str) -> str | None:
+    value = normalize_field(data.get(key) if isinstance(data, dict) else None)
+    if value in (None, "", "null", "None", "..."):
+        return None
+
+    value = str(value).strip()
+    if not value or value in ("null", "None", "..."):
+        return None
+
+    return value
+
+
+def _digits_only(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = str(value).translate(_AR_INDIC)
+    value = _fix_arabic_zero_dot(value)
+    digits = re.sub(r"\D", "", value)
+    return digits or None
+
+
+def _clean_alnum(value: str | None) -> str | None:
+    if not value:
+        return None
+    value = str(value).upper().strip()
+    value = re.sub(r"[^A-Z0-9]", "", value)
+    return value or None
+
+
+# ---------------------------------------------------------------------
+# EasyOCR targeted fallback
+# ---------------------------------------------------------------------
+
+def _easyocr_extract_registration(back_path: str) -> str | None:
+    """
+    Targeted EasyOCR fallback for registration_number only.
+    Finds 10-digit Arabic-Indic/western numbers starting with 1,
+    then picks the one spatially closest to the ??? ??????? label.
+    """
+    try:
+        from ocr_engine import load_and_resize, ocr_to_tokens, READER_MIX
+    except ImportError as exc:
+        print(f"  [WARN] EasyOCR fallback unavailable: {exc}")
+        return None
+
+    try:
+        img = load_and_resize(back_path)
+        tokens = ocr_to_tokens(img, READER_MIX)
+    except Exception as exc:
+        print(f"  [WARN] EasyOCR read failed: {exc}")
+        return None
+
+    label_y: int | None = None
+    for tok in tokens:
+        txt = str(tok.get("text", ""))
+        if "???????" in txt or "?????" in txt:
+            label_y = int(tok.get("y", 0))
+            print(f"  [INFO] EasyOCR found ??? ??????? label at y={label_y}")
+            break
+
+    if label_y is None:
+        print("  [WARN] EasyOCR: label ??? ??????? not found; scanning all tokens")
+
+    candidates: list[tuple[int, str]] = []
+
+    for tok in tokens:
+        text = str(tok.get("text", ""))
+        normalised = _digits_only(text)
+        if normalised and len(normalised) == 10 and normalised.startswith("1"):
+            y = int(tok.get("y", 0))
+            dist = abs(y - label_y) if label_y is not None else 9999
+            candidates.append((dist, normalised))
+            print(f"      candidate: {normalised!r} y={y} dist={dist}px")
+
+    if not candidates:
+        print("  [WARN] EasyOCR: no 10-digit candidate found")
+        return None
+
+    candidates.sort(key=lambda x: x[0])
+    best_dist, best = candidates[0]
+    print(f"  [OK] EasyOCR registration: {best} (row_dist={best_dist}px)")
+    return best
+
+
+def _crop_registration_row(image_path: str) -> str:
+    """
+    Try to find the ??? ??????? label using EasyOCR, then crop that row.
+    If label detection fails, fall back to a fixed top-right crop.
+    """
+    cropped_path = None
+
+    try:
+        from ocr_engine import load_and_resize, ocr_to_tokens, READER_MIX
+
+        img = load_and_resize(image_path)
+        tokens = ocr_to_tokens(img, READER_MIX)
+        h, w = img.shape[:2]
+
+        label_tok = None
+        for t in tokens:
+            txt = str(t.get("text", ""))
+            if "???????" in txt or "?????" in txt:
+                label_tok = t
+                break
+
+        if label_tok:
+            pad = 20
+            y1 = max(0, int(label_tok.get("y", 0)) - pad)
+            y2 = min(h, int(label_tok.get("y2", y1 + 40)) + pad)
+            x1, x2 = 0, w
+            print(f"  [INFO] Found ??? ??????? at y={label_tok.get('y')}, cropping row")
+        else:
+            print("  [WARN] Label not found; using fixed top-right crop")
+            y1, y2 = 0, int(h * 0.25)
+            x1, x2 = int(w * 0.45), w
+
+        crop = img[y1:y2, x1:x2]
+        if crop.size == 0:
+            return image_path
+
+    except Exception as exc:
+        print(f"  [WARN] EasyOCR crop failed ({exc}); using fixed crop")
+        img = cv2.imread(image_path)
+        if img is None:
+            return image_path
+
+        h, w = img.shape[:2]
+        crop = img[0:int(h * 0.25), int(w * 0.45):w]
+
+    # Upscale and enhance.
+    crop = cv2.resize(crop, None, fx=2.5, fy=2.5, interpolation=cv2.INTER_CUBIC)
+
+    if len(crop.shape) == 3 and crop.shape[2] == 3:
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = crop
+
+    gray = cv2.convertScaleAbs(gray, alpha=1.5, beta=20)
+    gray = cv2.fastNlMeansDenoising(gray, h=10)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    fd, cropped_path = tempfile.mkstemp(suffix=".jpg", prefix="ocr_reg_crop_")
+    os.close(fd)
+    cv2.imwrite(cropped_path, thresh)
+    return cropped_path
+
+
+# ---------------------------------------------------------------------
+# HTTP helpers
+# ---------------------------------------------------------------------
+
+def _get(url: str, timeout: int = 5) -> dict:
+    with urllib.request.urlopen(url, timeout=timeout) as r:
+        return json.loads(r.read())
+
+
+def _post(url: str, payload: dict, timeout: int = REQUEST_TIMEOUT) -> dict:
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read())
+
+
+def _encode_image(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("ascii")
+
+
+def _first_json_object(text: str) -> str | None:
+    """Return the first balanced JSON object from text."""
+    start = text.find("{")
+    if start < 0:
+        return None
+
+    depth = 0
+    in_string = False
+    escape = False
+
+    for i in range(start, len(text)):
+        ch = text[i]
+
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+
+    return None
+
+
+def _parse_json_response(text: str) -> dict:
+    """
+    Robustly extract JSON from model response.
+    Handles:
+      - pure JSON
+      - markdown fences
+      - <think> blocks
+      - prose around JSON
+    """
+    original = (text or "").strip()
+
+    # Remove <think> blocks.
+    text = re.sub(r"<think>[\s\S]*?</think>", "", original, flags=re.IGNORECASE).strip()
+
+    # Remove markdown fences.
+    text = re.sub(r"```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"```", "", text)
+
+    obj = _first_json_object(text)
+    if obj:
+        try:
+            return json.loads(obj)
+        except json.JSONDecodeError:
+            pass
+
+    # Last resort: recover simple key:value lines.
+    recovered = {}
+    for line in original.splitlines():
+        line = line.strip()
+        kv = re.match(r'^["\']?(\w+)["\']?\s*:\s*["\']?([^"\'{\[\n]+)["\']?$', line)
+        if kv:
+            recovered[kv.group(1)] = kv.group(2).strip().rstrip('",')
+
+    if recovered:
+        print(f"  [WARN] JSON parse failed; recovered {len(recovered)} key(s) from prose")
+        return recovered
+
+    if original:
+        print(f"  [WARN] JSON parse failed completely. Preview: {original[:200]!r}")
+
+    return {}
+
+
+# ---------------------------------------------------------------------
+# Ollama request helpers
+# ---------------------------------------------------------------------
+
+def _is_thinking_model(model: str) -> bool:
+    base = model.split(":")[0].lower()
+    return any(base == prefix for prefix in _THINKING_MODEL_PREFIXES)
+
+
+def _ask(model: str, prompt: str, image_path: str, _retry: bool = False) -> dict:
+    """
+    Send one image + prompt to Ollama and return parsed JSON.
+    """
+    if _is_thinking_model(model):
+        return _ask_chat(model, prompt, image_path, _retry=_retry)
+
+    return _ask_generate(model, prompt, image_path, _retry=_retry)
+
+
+def _ask_generate(model: str, prompt: str, image_path: str, _retry: bool = False) -> dict:
+    """
+    /api/generate path for non-thinking vision models.
+    """
+    num_predict = 2048 if not _retry else 4096
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "images": [_encode_image(image_path)],
+        "stream": False,
+        "options": {
+            "temperature": 0.0,
+            "num_predict": num_predict,
+        },
+    }
+
+    resp = _post(f"{OLLAMA_BASE}/api/generate", payload)
+    raw = resp.get("response", "").strip()
+    done_reason = resp.get("done_reason", "")
+
+    print(f"      raw preview: {raw[:300].strip()!r} [done={done_reason!r}]")
+
+    is_truncated = (
+        done_reason == "length"
+        or (raw and not raw.rstrip().endswith("}"))
+    )
+
+    if is_truncated:
+        print("      [WARN] Response appears truncated or missing closing JSON brace")
+
+    result = _parse_json_response(raw)
+
+    if not result and is_truncated and not _retry:
+        print("      [RETRY] Retrying with 4096 token budget")
+        return _ask_generate(model, prompt, image_path, _retry=True)
+
+    if not result:
+        print(f"      [ERROR] No JSON extracted. Full raw: {raw!r}")
+
+    return result
+
+
+def _ask_chat(model: str, prompt: str, image_path: str, _retry: bool = False) -> dict:
+    """
+    /api/chat path for thinking-capable models.
+    Uses think=false and /no_think to reduce reasoning output.
+    """
+    image_b64 = _encode_image(image_path)
+    num_predict = 2048 if not _retry else 4096
+
+    payload = {
+        "model": model,
+        "stream": False,
+        "think": False,
+        "options": {
+            "temperature": 0.0,
+            "num_predict": num_predict,
+            "num_ctx": 4096,
+        },
+        "messages": [
+            {
+                "role": "user",
+                "content": "/no_think\n" + prompt,
+                "images": [image_b64],
+            }
+        ],
+    }
+
+    resp = _post(f"{OLLAMA_BASE}/api/chat", payload)
+    msg = resp.get("message", {})
+    raw = msg.get("content", "").strip()
+    done_reason = resp.get("done_reason", "")
+
+    thinking_leaked = msg.get("thinking", "").strip()
+    if thinking_leaked:
+        print(f"  [WARN] Thinking leaked despite think=false ({len(thinking_leaked)} chars)")
+
+    raw = re.sub(r"<think>[\s\S]*?</think>", "", raw, flags=re.IGNORECASE).strip()
+
+    print(f"      raw preview: {raw[:300].strip()!r} [done={done_reason!r}]")
+
+    result = _parse_json_response(raw)
+
+    if not result and done_reason == "length" and not _retry:
+        print("      [RETRY] Truncated; retrying with 4096 token budget")
+        return _ask_chat(model, prompt, image_path, _retry=True)
+
+    if not result:
+        print(f"      [ERROR] No JSON extracted. Full raw: {raw!r}")
+
+    return result
+
+
+# ---------------------------------------------------------------------
+# Model detection
+# ---------------------------------------------------------------------
+
+_cached_model: str | None = None
+_detection_done: bool = False
+
+
+def _model_base(name: str) -> str:
+    return name.split(":")[0].lower().strip()
+
+
+def _is_supported_vision_model(model_name: str) -> bool:
+    installed_base = _model_base(model_name)
+
+    for preferred in _VISION_PRIORITY:
+        preferred_base = _model_base(preferred)
+        if installed_base == preferred_base or installed_base.startswith(preferred_base):
+            return True
+
+    return False
+
+
+def get_vision_model() -> str | None:
+    global _cached_model, _detection_done
+
+    if _detection_done:
+        return _cached_model
+
+    _detection_done = True
+
+    if _FORCED_MODEL:
+        _cached_model = _FORCED_MODEL
+        print(f"  [INFO] Ollama model forced via env: {_cached_model}")
+        return _cached_model
+
+    try:
+        data = _get(f"{OLLAMA_BASE}/api/tags", timeout=3)
+        full_names = [m["name"] for m in data.get("models", [])]
+    except Exception as exc:
+        print(f"  [INFO] Ollama not reachable at {OLLAMA_BASE} ({exc}); falling back to EasyOCR")
+        return None
+
+    if not full_names:
+        print("  [INFO] Ollama is running but no models are installed")
+        print("       Run: ollama pull qwen2.5vl:7b")
+        return None
+
+    print(f"  [INFO] Ollama models available: {full_names}")
+
+    for preferred in _VISION_PRIORITY:
+        preferred_base = _model_base(preferred)
+
+        for full_name in full_names:
+            installed_base = _model_base(full_name)
+
+            if installed_base == preferred_base or installed_base.startswith(preferred_base):
+                _cached_model = full_name
+
+                if any(full_name.startswith(w) for w in _WEAK_MODELS):
+                    print(f"  [WARN] Weak vision model selected: {_cached_model}")
+                    print("       For better OCR, run: ollama pull qwen2.5vl:7b")
+                else:
+                    print(f"  [OK] Ollama vision model selected: {_cached_model}")
+
+                return _cached_model
+
+    # IMPORTANT:
+    # Do NOT fallback to full_names[0], because it may be a text-only model like qwen3:8b.
+    print(f"  [WARN] No supported vision model found. Installed models: {full_names}")
+    print("       Pull one vision model, for example:")
+    print("       ollama pull qwen2.5vl:7b")
+
+    _cached_model = None
+    return None
+
+
+def is_available() -> bool:
+    return get_vision_model() is not None
+
+
+def reset_cache() -> None:
+    global _cached_model, _detection_done
+    _cached_model = None
+    _detection_done = False
+
+
+# ---------------------------------------------------------------------
+# Logging helper
+# ---------------------------------------------------------------------
+
+def _log_missing(doc_type: str, data: dict) -> None:
+    missing = [
+        k for k, v in data.items()
+        if v is None or str(v).strip() in ("", "null", "None")
+    ]
+
+    if missing:
+        print(f"  [WARN] Missing fields ({doc_type}): {', '.join(missing)}")
+    else:
+        print(f"  [OK] All fields extracted ({doc_type})")
+
+
+# ---------------------------------------------------------------------
+# Document extractors
+# ---------------------------------------------------------------------
+
+def extract_passport(image_path: str) -> dict:
+    """
+    Extract passport fields.
+    Returns same general shape as passport_parser.extract_passport().
+    """
+    model = get_vision_model()
+
+    if not model:
+        raise RuntimeError("No Ollama vision model available. Run: ollama pull qwen2.5vl:7b")
+
+    print(f"  [INFO] Ollama passport OCR ({model})")
+    raw = _ask(model, _PROMPT_PASSPORT, image_path)
+
+    passport = {
+        "passport_no": _str_field(raw, "passport_no"),
+        "national_no": _str_field(raw, "national_no"),
+        "name_en": _str_field(raw, "name_en"),
+        "name_ar": _str_field(raw, "name_ar"),
+        "date_of_birth": _str_field(raw, "date_of_birth"),
+        "expiry_date": _str_field(raw, "expiry_date"),
+        "issue_date": _str_field(raw, "issue_date"),
+        "gender": _str_field(raw, "gender"),
+        "nationality": _str_field(raw, "nationality"),
+        "place_of_birth": _str_field(raw, "place_of_birth"),
+    }
+
+    mrz_l1 = _str_field(raw, "mrz_l1")
+    mrz_l2 = _str_field(raw, "mrz_l2")
+    checks = {}
+
+    if mrz_l1 and mrz_l2:
+        try:
+            from ocr_engine import normalize_mrz_l1_td3, normalize_mrz_l2_td3, validate_td3
+
+            mrz_l1 = normalize_mrz_l1_td3(mrz_l1)
+            mrz_l2 = normalize_mrz_l2_td3(mrz_l2)
+            checks = validate_td3(mrz_l2)
+        except Exception as exc:
+            print(f"  [WARN] MRZ normalization failed: {exc}")
+
+    mrz = {
+        "mrz_l1": mrz_l1,
+        "mrz_l2": mrz_l2,
+        "line1": mrz_l1,
+        "line2": mrz_l2,
+        "mrz_valid": bool(checks) and all(checks.values()),
+        "mrz_checks": checks,
+    }
+
+    _log_missing("passport", passport)
+
+    return {
+        "engine": "ollama",
+        "model": model,
+        "quality": None,
+        "passport": passport,
+        "mrz": mrz,
+    }
+
+
+def extract_jordan_id(front_path: str, back_path: str | None = None) -> dict:
+    """
+    Extract Jordanian national ID fields.
+    Returns same general shape as national_id_parser.extract_jordan_id().
+    """
+    model = get_vision_model()
+
+    if not model:
+        raise RuntimeError("No Ollama vision model available. Run: ollama pull qwen2.5vl:7b")
+
+    print(f"  [INFO] Ollama national ID OCR ({model})")
+
+    front = _ask(model, _PROMPT_NATIONAL_ID_FRONT, front_path)
+    back = _ask(model, _PROMPT_NATIONAL_ID_BACK, back_path) if back_path else {}
+
+    national_number = _digits_only(_str_field(front, "national_number"))
+
+    data = {
+        "national_number": national_number,
+        "full_name_ar": _str_field(front, "full_name_ar"),
+        "full_name_en": _str_field(front, "full_name_en"),
+        "date_of_birth": _str_field(front, "date_of_birth"),
+        "gender": _str_field(front, "gender"),
+        "place_of_birth": _str_field(front, "place_of_birth"),
+        "mother_name": _str_field(front, "mother_name"),
+        "blood_type": _str_field(back, "blood_type"),
+        "document_number": _str_field(back, "document_number"),
+        "expiry_date": _str_field(back, "expiry_date"),
+    }
+
+    mrz = {
+        "mrz_l1": _str_field(back, "mrz_l1"),
+        "mrz_l2": _str_field(back, "mrz_l2"),
+        "mrz_l3": _str_field(back, "mrz_l3"),
+        "mrz_valid": False,
+        "mrz_checks": {},
+    }
+
+    _log_missing("national_id", data)
+
+    return {
+        "engine": "ollama",
+        "model": model,
+        "quality": None,
+        "data": data,
+        "mrz": mrz,
+    }
+
+
+def extract_vehicle_license(front_path: str, back_path: str) -> dict:
+    """
+    Extract Jordanian vehicle license fields.
+    """
+    model = get_vision_model()
+
+    if not model:
+        raise RuntimeError("No Ollama vision model available. Run: ollama pull qwen2.5vl:7b")
+
+    print(f"  [INFO] Ollama vehicle license OCR ({model})")
+
+    front_raw = _ask(model, _PROMPT_VEHICLE_FRONT, front_path)
+    back_raw = _ask(model, _PROMPT_VEHICLE_BACK, back_path)
+
+    print(f"      front: {front_raw}")
+    print(f"      back: {back_raw}")
+
+    plate = _str_field(front_raw, "plate_number")
+    reg = _str_field(back_raw, "registration_number")
+    chassis = _str_field(back_raw, "chassis_number")
+    policy = _str_field(back_raw, "policy_number")
+
+    if reg:
+        reg = _digits_only(reg)
+
+    if policy:
+        policy = _digits_only(policy)
+
+    if chassis:
+        chassis = _clean_alnum(chassis)
+
+    if reg and policy and reg == policy:
+        print("  [WARN] registration_number == policy_number; model confused fields, clearing registration")
+        reg = None
+
+    # Attempt 2: focused prompt on full image.
+    if not reg:
+        print("  [RETRY] Attempt 2: registration focused prompt on full image")
+        r = _ask(model, _PROMPT_VEHICLE_BACK_REG, back_path)
+        reg = _digits_only(_str_field(r, "registration_number"))
+
+        if reg and policy and reg == policy:
+            reg = None
+
+    # Attempt 3: crop registration row.
+    cropped_path = None
+
+    if not reg:
+        print("  [RETRY] Attempt 3: registration cropped row")
+        cropped_path = _crop_registration_row(back_path)
+        r = _ask(model, _PROMPT_VEHICLE_BACK_REG, cropped_path)
+        reg = _digits_only(_str_field(r, "registration_number"))
+
+        if reg and policy and reg == policy:
+            reg = None
+
+    # Attempt 4: raw Arabic-Indic copy, then Python converts.
+    if not reg:
+        print("  [RETRY] Attempt 4: registration raw Arabic copy")
+        src = cropped_path or back_path
+        r = _ask(model, _PROMPT_VEHICLE_BACK_REG_RAW, src)
+        raw_arabic = _str_field(r, "registration_number_raw")
+
+        if raw_arabic:
+            converted = _digits_only(raw_arabic)
+            if converted and len(converted) == 10 and converted.startswith("1"):
+                reg = converted
+                print(f"  [OK] Raw Arabic registration converted to {reg}")
+            else:
+                print(f"  [WARN] Raw Arabic registration failed: {raw_arabic!r} -> {converted!r}")
+
+    # Attempt 5: targeted EasyOCR fallback.
+    if not reg:
+        print("  [RETRY] Attempt 5: targeted EasyOCR registration fallback")
+        reg = _easyocr_extract_registration(back_path)
+
+        if reg:
+            reg = _digits_only(reg)
+
+            if policy and reg == policy:
+                print("  [WARN] EasyOCR result matches policy; discarding registration")
+                reg = None
+        else:
+            print("  [WARN] EasyOCR fallback returned null")
+
+    # Clean temp crop.
+    if cropped_path and cropped_path != back_path and os.path.exists(cropped_path):
+        try:
+            os.remove(cropped_path)
+        except OSError:
+            pass
+
+    # Retry chassis if missing.
+    if not chassis:
+        print("  [RETRY] Retrying chassis_number")
+        r = _ask(model, _PROMPT_VEHICLE_BACK_CHASSIS, back_path)
+        chassis = _clean_alnum(_str_field(r, "chassis_number"))
+
+    # Retry policy if missing.
+    if not policy:
+        print("  [RETRY] Retrying policy_number")
+        r = _ask(model, _PROMPT_VEHICLE_BACK_POLICY, back_path)
+        policy = _digits_only(_str_field(r, "policy_number"))
+
+    # Final validation.
+    if reg:
+        if len(reg) != 10 or not reg.startswith("1"):
+            print(f"  [WARN] Registration '{reg}' failed format validation; setting null")
+            reg = None
+
+    if chassis:
+        if len(chassis) != 17:
+            print(f"  [WARN] Chassis '{chassis}' failed 17-char validation; keeping value but check manually")
+
+    data = {
+        "plate_number": plate,
+        "registration_number": reg,
+        "chassis_number": chassis,
+        "policy_number": policy,
+    }
+
+    _log_missing("vehicle_license", data)
+
+    return {
+        "success": True,
+        "engine": "ollama",
+        "model": model,
+        "doc_type": "vehicle_license",
+        "quality": None,
+        "data": data,
+    }

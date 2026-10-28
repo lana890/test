@@ -1,0 +1,6 @@
+{
+  "id": "EskaCMS.DataAccess",
+  "name": "DataAccess",
+  "isBundledWithHost": true,
+  "version": "1.0.0"
+}

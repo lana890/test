@@ -1,0 +1,298 @@
+[
+  {
+    "id": "EskaCMS.Core",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.EmailSender.SMTP",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCommerce.Catalog",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Localization",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Survey",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.FileStorage",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Tax",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Addresses",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.BlogArchive",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.Components",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Dashboard",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Forms",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.General",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Media",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Menus",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Pages",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Sites",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Theming",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Vendors",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Security",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.ShoppingCart",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Pricing",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Notifications",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Orders",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+
+  {
+    "id": "EskaCommerce.Shipments",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Inventory",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+
+  {
+    "id": "EskaCommerce.Payments",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+
+  {
+    "id": "EskaCommerce.Reviews",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Comments",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.ProductRecentlyViewed",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.ProductComparison",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCommerce.TelrPayment",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.Discount",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCommerce.LoyaltyPoints",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.SignalR",
+    "name": "SignalR RealTime",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Search",
+    "name": "Search",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.ADIntegration",
+    "name": "ADIntegration",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Events",
+    "name": "Events",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCms.CoreShared",
+    "name": "CoreShared",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.DocumentsNumbering",
+    "name": "DocumentsNumbering",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Elements",
+    "name": "Elements",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Logging",
+    "name": "Logging",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.EskaCoreReports",
+    "name": "EskaCoreReports",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Middlewares",
+    "name": "Middlewares",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.RateLimit",
+    "name": "RateLimit",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Filters",
+    "name": "Filters",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+
+
+ 
+  {
+    "id": "EskaCMS.Entities",
+    "name": "Entities",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.EskaBilling",
+    "name": "EskaBilling",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.WorkFlow",
+    "name": "WorkFlow",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.Chat",
+    "name": "Chat",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+
+  {
+    "id": "EskaCMS.UserAchievements",
+    "name": "UserAchievements",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  },
+  {
+    "id": "EskaCMS.DataAccess",
+    "name": "DataAccess",
+    "isBundledWithHost": true,
+    "version": "1.0.0"
+  }
+]

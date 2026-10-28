@@ -1,0 +1,89 @@
+﻿using System.Threading.Tasks;
+using EskaCMS.Core.Models;
+using EskaCMS.Entities.Entity.Core;
+using EskaCMS.Infrastructure.Data;
+using EskaCommerce.ProductRecentlyViewed.Areas.ProductRecentlyViewed.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+
+
+namespace EskaCommerce.ProductRecentlyViewed.Areas.ProductRecentlyViewed.Controllers
+{
+    [Area("ProductRecentlyViewed")]
+    //[Authorize(Roles = "admin")]
+    [Route("api/recently-viewed-widgets")]
+    public class RecentlyViewedWidgetApiController : Controller
+    {
+        private readonly IRepository<WidgetInstance> _widgetInstanceRepository;
+      
+
+        public RecentlyViewedWidgetApiController(IRepository<WidgetInstance> widgetInstanceRepository)
+        {
+            _widgetInstanceRepository = widgetInstanceRepository;
+         
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(long id)
+        {
+            var widgetInstance = await _widgetInstanceRepository.Query().FirstOrDefaultAsync(x => x.Id == id);
+            var model = new RecentlyViewedWidgetForm
+            {
+                Id = widgetInstance.Id,
+                Name = widgetInstance.Name,
+                WidgetZoneId = widgetInstance.WidgetZoneId,
+                PublishStart = widgetInstance.PublishStart,
+                PublishEnd = widgetInstance.PublishEnd,
+                DisplayOrder = widgetInstance.DisplayOrder,
+                ItemCount = JsonConvert.DeserializeObject<int>(widgetInstance.Data)
+            };
+
+            return Json(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] RecentlyViewedWidgetForm model)
+        {
+            {
+                if (!ModelState.IsValid) return BadRequest(ModelState);
+                var widgetInstance = new WidgetInstance
+                {
+                    Name = model.Name,
+                    WidgetId = "RecentlyViewedWidget",
+                    WidgetZoneId = model.WidgetZoneId,
+                    Data = model.ItemCount.ToString(),
+                    PublishStart = model.PublishStart,
+                    PublishEnd = model.PublishEnd,
+                    DisplayOrder = model.DisplayOrder,
+                };
+
+                _widgetInstanceRepository.Add(widgetInstance);
+                await _widgetInstanceRepository.SaveChangesAsync();
+                return CreatedAtAction(nameof(Get), new {id = widgetInstance.Id}, null);
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(long id, [FromBody] RecentlyViewedWidgetForm model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var widgetInstance = await _widgetInstanceRepository.Query().FirstOrDefaultAsync(x => x.Id == id);
+            if(widgetInstance == null)
+            {
+                return NotFound();
+            }
+
+            widgetInstance.Name = model.Name;
+            widgetInstance.PublishStart = model.PublishStart;
+            widgetInstance.PublishEnd = model.PublishEnd;
+            widgetInstance.WidgetZoneId = model.WidgetZoneId;
+            widgetInstance.DisplayOrder = model.DisplayOrder;
+            widgetInstance.Data = model.ItemCount.ToString();
+
+            await _widgetInstanceRepository.SaveChangesAsync();
+            return Accepted();
+        }
+
+    }
+}

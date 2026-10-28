@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- The provider code consolidated into this project was written in projects that had
+         implicit usings on, so it relies on System, System.Collections.Generic and
+         System.Threading.Tasks being in scope. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+   
+    <!--<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3" />-->
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Core\EskaCMS.Core.csproj" />
+		<ProjectReference Include="..\EskaCommerce.ShoppingCart\EskaCommerce.ShoppingCart.csproj" />
+		<!-- The provider controllers and services moved in here need the order pipeline, the
+		     subscription services and the integration helpers. This is only possible because
+		     EskaCommerce.Orders no longer references this project: IPaymentServices and
+		     TransactionHistoryDto, the only things it needed from here, now live in
+		     EskaCMS.Core (under their original namespaces). -->
+		<ProjectReference Include="..\EskaCommerce.Orders\EskaCommerce.Orders.csproj" />
+		<ProjectReference Include="..\..\EskaCMS.IntegrationDepartment\EskaCMS.Integrations.csproj" />
+	</ItemGroup>
+
+</Project>

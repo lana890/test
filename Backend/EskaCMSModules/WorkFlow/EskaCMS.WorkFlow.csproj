@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Entitys\EskaCMS.Entities.csproj" />
+		<ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\EskaCommerceModules\EskaCommerce.Notifications\EskaCommerce.Notifications.csproj" />
+		<ProjectReference Include="..\EskaCMS.Core\EskaCMS.Core.csproj" />
+		<ProjectReference Include="..\EskaCMS.EmailSender.SMTP\EskaCMS.EmailSender.SMTP.csproj" />
+		<ProjectReference Include="..\EskaCMS.Localization\EskaCMS.Localization.csproj" />
+		<ProjectReference Include="..\EskaCMS.Tax\EskaCMS.Tax.csproj" />
+	</ItemGroup>
+
+</Project>

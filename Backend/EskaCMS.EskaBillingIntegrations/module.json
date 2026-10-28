@@ -1,0 +1,6 @@
+{
+  "id": "EskaCMS.Integrations.EskaBilling",
+  "name": "EskaBilling",
+  "isBundledWithHost": true,
+  "version": "1.0.0"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "EskaCMS.EmailSender.SMTP",
+  "name": "EmailSender SMTP",
+  "isBundledWithHost": true,
+  "version": "1.0.0"
+}

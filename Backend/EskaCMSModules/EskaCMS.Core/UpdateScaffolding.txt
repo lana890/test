@@ -1,0 +1,4 @@
+﻿From command prompt:
+
+cd D:\TFS Mapping\DCMS\DCMS Backend\data\EskaCMS.Data.Model
+dotnet ef dbcontext scaffold "server=192.168.0.60;port=3306;user=root;password=SYSTEM;database=cms_dynamic" MySql.Data.EntityFrameworkCore -o Models -c EskaCMSDbContext

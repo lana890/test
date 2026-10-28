@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "EskaCMS.WebHost",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--project",
+        "EskaCMS.WebHost/EskaCMS.WebHost.csproj",
+        "--no-build",
+        "--Kestrel:EndPoints:Http1:Url=http://localhost:5000"
+      ],
+      "port": 5000
+    }
+  ]
+}

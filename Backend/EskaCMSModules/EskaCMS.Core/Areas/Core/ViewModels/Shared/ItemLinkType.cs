@@ -1,0 +1,4 @@
+﻿namespace EskaCMS.Core.Enums
+{
+  
+}

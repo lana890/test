@@ -1,0 +1,5 @@
+﻿namespace EskaCMS.DocumentsNumbering.Enums
+{
+
+   
+}

@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\**" />
+    <EmbeddedResource Remove="Controllers\**" />
+    <None Remove="Controllers\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Entitys\EskaCMS.Entities.csproj" />
+    <ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Catalog\EskaCommerce.Catalog.csproj" />
+    <ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Core\EskaCMS.Core.csproj" />
+    <ProjectReference Include="..\..\EskaCMSModules\EskaCMS.EmailSender.SMTP\EskaCMS.EmailSender.SMTP.csproj" />
+    <ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Search\EskaCMS.Search.csproj" />
+    <ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Security\EskaCMS.Security.csproj" />
+    <ProjectReference Include="..\EskaCommerce.DinkToPdf\EskaCommerce.DinkToPdf.csproj" />
+    <ProjectReference Include="..\EskaCommerce.Discount\EskaCommerce.Discount.csproj" />
+    <ProjectReference Include="..\EskaCommerce.Inventory\EskaCommerce.Inventory.csproj" />
+    <ProjectReference Include="..\EskaCommerce.LoyaltyPoints\EskaCommerce.LoyaltyPoints.csproj" />
+    <ProjectReference Include="..\EskaCommerce.Shipments\EskaCommerce.Shipments.csproj" />
+    <ProjectReference Include="..\EskaCommerce.ShoppingCart\EskaCommerce.ShoppingCart.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Orders\Components\" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+
+  </ItemGroup>
+
+</Project>

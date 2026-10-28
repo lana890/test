@@ -1,0 +1,139 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName>%24/DCMS/Releases/5.1.1/Backend/EskaCMS.WebHost</SccProjectName>
+    <SccProvider>{4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}</SccProvider>
+    <SccAuxPath>http://tfs-2017:8080/tfs/rapidapplicationdevelopment</SccAuxPath>
+    <SccLocalPath>.</SccLocalPath>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup> 
+
+  <PropertyGroup>  
+    <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>aspnet-Modular.WebHost-dca604fa-ee10-4a6c-8e7d-8cc79dca8c8f</UserSecretsId>
+	  <!-- Throughput: make Server GC + background (concurrent) GC explicit. These are the
+	       defaults for the ASP.NET Core (Web) SDK, but pinning them guarantees the
+	       multi-heap, parallel collector is used under high concurrency regardless of
+	       host/runtimeconfig overrides. Behavior-preserving (GC mode only). -->
+	  <ServerGarbageCollection>true</ServerGarbageCollection>
+	  <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+	  <EnableDefaultContentItems>false</EnableDefaultContentItems>
+	  <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+	  <RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+	  <RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+	  <EnableNETAnalyzers>False</EnableNETAnalyzers>
+		  <NoWarn>$(NoWarn);NU1608</NoWarn>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <Optimize>True</Optimize>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <Optimize>True</Optimize>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+  </PropertyGroup> 
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="wwwroot\**\*;modules.json;appsettings.json;Modules\**\*;Themes\**\*;Views\**\*">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="integration-settings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="wwwroot\Resources\5.rar" />
+	</ItemGroup>
+	<ItemGroup>
+<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Entitys\EskaCMS.Entities.csproj" />
+		<ProjectReference Include="..\EskaCMS.Chat\EskaCMS.Chat.csproj" />
+		<ProjectReference Include="..\EskaCms.CoreShared\EskaCms.CoreShared.csproj" />
+		<ProjectReference Include="..\EskaCMS.DataAccess\EskaCMS.DataAccess.csproj" />
+		<ProjectReference Include="..\EskaCMS.EskaBillingIntegrations\EskaCMS.EskaBilling.csproj" />
+		<ProjectReference Include="..\EskaCMS.Filters\EskaCMS.Filters.csproj" />
+		<ProjectReference Include="..\EskaCMS.HOC\EskaCMS.HOC.csproj" />
+		<ProjectReference Include="..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+		<ProjectReference Include="..\EskaCMS.IntegrationDepartment\EskaCMS.Integrations.csproj" />
+		<ProjectReference Include="..\EskaCMS.Middlewares\EskaCMS.Middlewares.csproj" />
+		<ProjectReference Include="..\EskaCMS.RateLimit\EskaCMS.RateLimit.csproj" />
+		<ProjectReference Include="..\EskaCMS.Shared\EskaCMS.ADIntegration.csproj" />
+		<ProjectReference Include="..\EskaCMS.UserAchievements\EskaCMS.UserAchievements.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Addresses\EskaCMS.Addresses.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Applications\EskaCMS.Sites.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.BLL\EskaCMS.General.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.BlogArchive1\EskaCMS.BlogArchive.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Catalog\EskaCommerce.Catalog.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Component\EskaCMS.Components.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Core\EskaCMS.Core.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Dashbaord\EskaCMS.Dashboard.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.DocumentsNumbering\EskaCMS.DocumentsNumbering.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\ESKACMS.Elements\EskaCMS.Elements.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.EmailSender.SMTP\EskaCMS.EmailSender.SMTP.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.EskaCoreReports\EskaCMS.EskaCoreReports.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Events\EskaCMS.Events.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Forms\EskaCMS.Forms.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Localization\EskaCMS.Localization.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.LocalStorage\EskaCMS.FileStorage.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\ESKACMS.Logging\EskaCMS.Logging.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Menus\EskaCMS.Menus.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Pages\EskaCMS.Pages.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Search\EskaCMS.Search.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Security\EskaCMS.Security.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Survey\EskaCMS.Survey.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Tax\EskaCMS.Tax.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMS.Theming\EskaCMS.Theming.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCMSMedia\EskaCMS.Media.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\EskaCommerce.SignalR\EskaCMS.SignalR.csproj" />
+		<ProjectReference Include="..\EskaCMSModules\WorkFlow\EskaCMS.WorkFlow.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Comments\EskaCommerce.Comments.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.DinkToPdf\EskaCommerce.DinkToPdf.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Discount\EskaCommerce.Discount.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.HangfireJobs\EskaCommerce.HangfireJobs.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Inventory\EskaCommerce.Inventory.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.LoyaltyPoints\EskaCommerce.LoyaltyPoints.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Notifications\EskaCommerce.Notifications.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Orders\EskaCommerce.Orders.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Payments\EskaCommerce.Payments.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Pricing\EskaCommerce.Pricing.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.ProductComparison\EskaCommerce.ProductComparison.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.ProductRecentlyViewed\EskaCommerce.ProductRecentlyViewed.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Reviews\EskaCommerce.Reviews.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Shipments\EskaCommerce.Shipments.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.ShoppingCart\EskaCommerce.ShoppingCart.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.TelrPayment\EskaCommerce.TelrPayment.csproj" />
+		<ProjectReference Include="..\EskaCommerceModules\EskaCommerce.Vendors\EskaCommerce.Vendors.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="AuthKey_VY3HHCN8QJ.p8">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Dockerfile">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="firebase.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+
+</Project>

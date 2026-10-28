@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Areas\Catalog\Components\**" />
+    <EmbeddedResource Remove="Areas\Catalog\Components\**" />
+    <None Remove="Areas\Catalog\Components\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Areas\Catalog\Controllers\AuctionWidgetApiController.cs" />
+    <Compile Remove="Areas\Catalog\Controllers\SimpleProductWidgetApiController.cs" />
+    <Compile Remove="Areas\Catalog\ViewModels\CategoryWidgetForm.cs" />
+    <Compile Remove="Areas\Catalog\ViewModels\CategoryWidgetSettings.cs" />
+    <Compile Remove="Areas\Catalog\ViewModels\ProductWidgetComponentVm.cs" />
+    <Compile Remove="Areas\Catalog\ViewModels\SimpleProductWidgetComponentVm.cs" />
+    <Compile Remove="Areas\Catalog\ViewModels\SimpleProductWidgetForm.cs" />
+    <Compile Remove="Services\ICurrencyService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Entitys\EskaCMS.Entities.csproj" />
+    <ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\EskaCommerceModules\EskaCommerce.Notifications\EskaCommerce.Notifications.csproj" />
+    <ProjectReference Include="..\EskaCMS.Core\EskaCMS.Core.csproj" />
+    <ProjectReference Include="..\EskaCMS.Pages\EskaCMS.Pages.csproj" />
+    <ProjectReference Include="..\EskaCMS.Tax\EskaCMS.Tax.csproj" />
+    <ProjectReference Include="..\EskaCMSMedia\EskaCMS.Media.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Enum\GeneralEnums\" />
+    <Folder Include="Services\ProductAdditionalFeesApiServices\ProductAdditionalFeesInterfaces\" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="7.4.0" />
+		<PackageReference Include="Microsoft.OpenApi" Version="1.6.14" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3" />
+	</ItemGroup>
+
+</Project>

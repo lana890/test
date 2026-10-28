@@ -1,0 +1,25 @@
+﻿using EskaCMS.Entities.Entity.Core;
+using EskaCMS.Infrastructure.Models;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
+namespace EskaCMS.Entities.Entity.BlogArchive
+{
+    //public partial class PostsTags : EntityBase
+    //{
+    //    //public long PostId { get; set; }
+    //    //public long TagId { get; set; }
+     
+    //    //public long CreatedById { get; set; }
+    //    //public DateTimeOffset CreationDate { get; set; }
+    //    //public long? ModifiedById { get; set; }
+    //    //public DateTimeOffset? ModificationDate { get; set; }
+
+    //    //public virtual Posts Post { get; set; }
+    //    //public virtual Tags Tag { get; set; }
+
+    //    //public virtual User CreatedBy { get; set; }
+    //    //public virtual User ModifiedBy { get; set; }
+    //}
+}

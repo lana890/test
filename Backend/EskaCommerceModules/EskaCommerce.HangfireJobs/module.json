@@ -1,0 +1,6 @@
+{
+  "id": "EskaCommerce.HangfireJobs",
+  "name": "Hangfire Jobs",
+  "isBundledWithHost": true,
+  "version": "1.0.0"
+}

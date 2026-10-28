@@ -1,0 +1,100 @@
+{
+    "Integration": {
+        "GeneralBaseUrl": "http://eska.fic.local/GeneralAPI",
+        "MedicalBaseUrl": "http://eska.fic.local/MIAPIs",
+        "FinancialBaseUrl2": "http://eska.fic.local/Financial.Integration.Interface/EskadeniaInterface",
+        "FinancialBaseUrl": "http://eska.fic.local/FinancialAPIs/JsonServer/Transactions",
+        "LongLifeToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6IkVTS0FBRE1JTiIsIlNlc3Npb25JZCI6IlRlbXAiLCJMb2dpbkRhdGUiOiIxLzIyLzIwMjYgMTI6MTI6NDAgUE0gKzAzOjAwIiwibmJmIjowLCJleHAiOjE5MjQ1OTMxNjB9.fg0YrWCZJtR6zdnZHcEp_MX4qcSlDS1o2sWl475DiqU",
+
+        "DefaultUser": "ONLINE",
+        "DefaultCurrency": "JOD",
+        "CompanyId": 1,
+        "BranchId": 9,
+        "Receipt": {
+            "BankAccountId": "294",
+            "BankAmount": null,
+            "CommissionAccountId": "439",
+            "CreditCardCode": "3",
+            "ApplicationID": "8",
+            "ReceiptDate": "",
+            "ApprovalNo": "",
+            "CreditCardNo": "",
+            "ReferenceNo": "",
+            "CommissionAmount": "0",
+            "CostCenterId": "8098",
+            "Note": "-1"
+        }
+    },
+
+    "JIF": {
+        "baseURL": "http://185.109.192.119:5085",
+        "USER_ID": "first",
+        "PASSWORD": "f@2828",
+        "CachePeriod": "2" //
+    },
+    "CarseerSettings": {
+        "ApiKey": "VGTHU87MVFD_SKCV56123GT",
+        "baseURL": "https://api.carseer.com",
+        "ApprovalApiUrl": "http://10.10.110.82/GeneralAPI/api/setup/AIInspectionClaim/VehicleAssessment",
+        "UploadAttachmentUrl": "http://eska.fic.local/GeneralAPI/api/Quotation/InsertAttachment"
+    },
+    "JOClaimInteg": {
+        "baseURL": "https://integrationdemo.joclaims.com",
+        "client_id": "00000000-0000-0000-0000-000000000000",
+        "client_secret": "8/j996P8eGMwhL7tqcEV7qRhzuZbiUv1j0NXvS9MkQc=",
+        "grant_type": "client_credentials",
+        "CallBackUrl": "https://dcmstest611.solidarity.com.jo/api/JoClaim/CBVehicleAssessment",
+        "hostName": "https://dcmstest611.solidarity.com.jo"
+    }
+}
+
+
+//{
+//	"Integration": {
+//		"GeneralBaseUrl": "http://10.10.110.82/GeneralAPI",
+//		"MedicalBaseUrl": "http://10.10.110.82/MIAPIs",
+//		"FinancialBaseUrl2": "http://10.10.110.82/Financial.Integration.Interface/EskadeniaInterface",
+//		"FinancialBaseUrl": "http://10.10.110.82/FinancialAPIs/JsonServer/Transactions",
+//		"LongLifeToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VybmFtZSI6IkVTS0FBRE1JTiIsIlNlc3Npb25JZCI6IlRlbXAiLCJMb2dpbkRhdGUiOiIxLzIyLzIwMjYgMTI6MTI6NDAgUE0gKzAzOjAwIiwibmJmIjowLCJleHAiOjE5MjQ1OTMxNjB9.fg0YrWCZJtR6zdnZHcEp_MX4qcSlDS1o2sWl475DiqU",
+
+//		"DefaultUser": "ONLINE",
+//		"DefaultCurrency": "JOD",
+//		"CompanyId": 1,
+//		"BranchId": 9,
+//		"Receipt": {
+//			"BankAccountId": "294",
+//			"BankAmount": null,
+//			"CommissionAccountId": "439",
+//			"CreditCardCode": "3", 
+//			"ApplicationID": "8",
+//			"ReceiptDate": "",
+//			"ApprovalNo": "",
+//			"CreditCardNo": "",
+//			"ReferenceNo": "",
+//			"CommissionAmount": "0",
+//			"CostCenterId": "8098",
+//			"Note": "-1"
+//		}
+//	},
+
+//      "JIF": {
+//        "baseURL": "http://185.109.192.119:5085",
+//        "USER_ID": "first",
+//        "PASSWORD": "f@2828",
+//        "CachePeriod": "2" // 
+//      },
+  
+//        "CarseerSettings": {
+//          "ApiKey": "VGTHU87MVFD_SKCV56123GT",
+//          "baseURL": "https://api.carseer.com",
+//          "ApprovalApiUrl": "https://your-approval-api/assessment/approval",
+//          "UploadAttachmentUrl": "https://your-upload-api/attachments"
+//        },
+//        "JOClaimInteg": {
+//          "baseURL": "https://integrationdemo.joclaims.com",
+//          "client_id": "00000000-0000-0000-0000-000000000000",
+//          "client_secret": "HM5kFfjtuaLA6k0Kb6ZaOJeWZswk8C/rr/jJS8uEDzY=",
+//          "grant_type": "client_credentials"
+//        }
+  
+//}

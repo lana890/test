@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="module.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="module.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\EskaCMS.Core\EskaCMS.Core.csproj" />
+		<ProjectReference Include="..\EskaCMS.Pages\EskaCMS.Pages.csproj" />
+		<ProjectReference Include="..\EskaCMSMedia\EskaCMS.Media.csproj" />
+
+
+	</ItemGroup>
+</Project>

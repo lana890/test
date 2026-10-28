@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Catalog\EskaCommerce.Catalog.csproj" />
+		<ProjectReference Include="..\EskaCommerce.Discount\EskaCommerce.Discount.csproj" />
+		<ProjectReference Include="..\EskaCommerce.Inventory\EskaCommerce.Inventory.csproj" />
+		<ProjectReference Include="..\EskaCommerce.LoyaltyPoints\EskaCommerce.LoyaltyPoints.csproj" />
+		<ProjectReference Include="..\EskaCommerce.Pricing\EskaCommerce.Pricing.csproj" />
+		<ProjectReference Include="..\EskaCommerce.Shipments\EskaCommerce.Shipments.csproj" />
+	</ItemGroup>
+
+
+</Project>

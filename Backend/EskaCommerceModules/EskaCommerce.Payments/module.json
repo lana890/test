@@ -1,0 +1,6 @@
+{
+  "id": "EskaCommerce.Payments",
+  "name": "Payments",
+  "isBundledWithHost": true,
+  "version": "1.0.0"
+}

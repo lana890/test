@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+    <Platforms>AnyCPU;x86;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+ 
+  </ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+		<ProjectReference Include="..\..\EskaCMSModules\EskaCMS.Core\EskaCMS.Core.csproj" />
+	</ItemGroup>
+</Project>

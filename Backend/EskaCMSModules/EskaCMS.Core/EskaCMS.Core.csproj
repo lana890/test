@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup Label="Globals">
+		<SccProjectName></SccProjectName>
+		<SccProvider></SccProvider>
+		<SccAuxPath></SccAuxPath>
+		<SccLocalPath></SccLocalPath>
+		<Platforms>AnyCPU;x86;x64</Platforms>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Areas\Core\Controllers\AccountController.cs" />
+		<Compile Remove="Areas\Core\Controllers\HomeController.cs" />
+		<Compile Remove="Areas\Core\Controllers\RoleApiController.cs" />
+		<Compile Remove="Areas\Core\Controllers\ThemeApiController.cs" />
+		<Compile Remove="Areas\Core\Controllers\WidgetApiController.cs" />
+		<Compile Remove="Areas\Core\Controllers\WidgetInstanceApiController.cs" />
+		<Compile Remove="Areas\Core\Controllers\WidgetZoneApiController.cs" />
+		<Compile Remove="Data\EskaCMSMySqlDbContext.cs" />
+		<Compile Remove="DBSnapshot.cs" />
+		<Compile Remove="Entities\DcmsLayoutComponent.cs" />
+		<Compile Remove="Entities\DcmsPagesComponents.cs" />
+		<Compile Remove="Entities\EskaCMSDbContext.cs" />
+		<Compile Remove="Entities\ExternalLoginConfirmationViewModel.cs" />
+		<Compile Remove="Entities\UsersRole.cs" />
+		<Compile Remove="Models\AppSetting.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="EskaCMS.Data.Model.csproj.vspscc" />
+		<None Remove="module.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="module.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Localization\" />
+		<Folder Include="Mapping\" />
+		<Folder Include="Utilz\" />
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Entitys\EskaCMS.Entities.csproj" />
+		<ProjectReference Include="..\..\EskaCMS.DataAccess\EskaCMS.DataAccess.csproj" />
+		<ProjectReference Include="..\..\EskaCMS.Infrastructure\EskaCMS.Infrastructure.csproj" />
+	</ItemGroup>
+
+</Project>

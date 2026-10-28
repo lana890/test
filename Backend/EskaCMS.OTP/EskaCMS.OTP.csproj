@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<RootNamespace>EskaCMS.OTP</RootNamespace>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<EnableNETAnalyzers>false</EnableNETAnalyzers>
+		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+		<NoWarn>$(NoWarn);NU1608;CS0168;CS0219;CS1998;CS8632;SYSLIB0021;SYSLIB0014</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+		<PackageReference Include="MailKit" Version="4.8.0" />
+		<!-- Same floating ranges as EskaCMS.Infrastructure (the project every other one goes
+		     through): ASP.NET Core / Microsoft.Extensions on 10.0.*, EF Core on 9.0.*.
+		     Pinning them here is what produced NU1605 downgrades - OTP asked for EF Core
+		     9.0.20 while Entities -> Infrastructure resolved 9.0.21 through
+		     Microsoft.EntityFrameworkCore.SqlServer.NetTopologySuite. -->
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.*" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="9.23.26200" />
+		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Entitys\EskaCMS.Entities.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\EskaCMS.WebHost\wwwroot\Keys\Private.key.pem" Link="wwwroot\Keys\Private.key.pem">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+		<Content Include="..\EskaCMS.WebHost\wwwroot\Keys\Public.pub.pem" Link="wwwroot\Keys\Public.pub.pem">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
+</Project>
