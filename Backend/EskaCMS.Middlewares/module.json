@@ -1,6 +1,41 @@
+private object ErrorWrap(string response, HttpContext context, IConfiguration configration)
 {
-  "id": "EskaCMS.Middlewares",
-  "name": "Middlewares",
-  "isBundledWithHost": true,
-  "version": "1.0.0"
+    var statusCode = context.Response.StatusCode;
+
+    // One readable sentence, whatever the body was (plain text, ProblemDetails,
+    // ModelState, serialized exception, HTML page...).
+    var reason = ApiErrorMessageHelper.FromResponseBody(response, statusCode);
+
+    var customCode = string.Empty;
+    var customMessage = string.Empty;
+
+    try
+    {
+        // Legacy "code$message" convention, but only for short plain-text prefixes,
+        // so "Amount $50 exceeded" or a JSON body is never split.
+        var separator = response?.IndexOf('$') ?? -1;
+        if (separator > 0 && separator <= 20
+            && !response.TrimStart().StartsWith("{")
+            && !response.Substring(0, separator).Contains(' '))
+        {
+            customCode = response.Substring(0, separator);
+            customMessage = ApiErrorMessageHelper.FromResponseBody(response.Substring(separator + 1), statusCode);
+        }
+
+        if (!string.IsNullOrWhiteSpace(response) && response.Contains("(401) Unauthorized"))
+            customCode = "401";
+
+        if (configration.GetValue<bool>("SecuirtyPenetration"))
+        {
+            customCode = statusCode.ToString();
+            customMessage = ApiErrorMessageHelper.GetStatusCodeMessage(statusCode);
+        }
+    }
+    catch { /* keep the defaults */ }
+
+    return new
+    {
+        code = string.IsNullOrEmpty(customCode) ? statusCode.ToString() : customCode,
+        message = string.IsNullOrEmpty(customMessage) ? reason : customMessage
+    };
 }
